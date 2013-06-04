@@ -22,7 +22,7 @@ DESCRIPTION = 9
 SOLUTION = 10
 OUTPUT = 11
 
-help_message = "NESSUS PARSER HELP\nNow fancier.\nWritten by maxb.\n\nINVOCATION:\n" + sys.argv[0] + " <options> input.csv \n\nOPTIONS:\n--condense-java: combine all java-related vulns in to one category.\n--level <level>: Show vulns of risk level <level>. Available options: Critical (default), High, Medium, Low, None.\n--filter-hostname <regex>: only show hostnames that match the regular expression <regex>. Suggested values: AEIO, SAS, etc. Keep things to one word, or be prepared to debug your regexes.\n\nEXAMPLES:\nBasic query to find all critical vulns at 1950 University, with combined Java results:\n" + sys.argv[0] + " --condense-java 1950.csv\nFind all High-rated vulnerabilities in the AEIO department, out of the more general Admissions scan:\n" + sys.argv[0] + " --condense-java --level High --filter-hostname AEIO admissions.csv\n\nAUXILIARY USAGE:\nMake this script more effective by piping the output to files like so:\n" + sys.argv[0] + " <options> input.csv > outfile.txt\nThen, compare two different outfiles (presumably from the same scan & different weeks) with:\nvimdiff <week1.txt> <week2.txt>"
+help_message = "NESSUS PARSER HELP\nNow fancier.\nWritten by maxb.\n\nINVOCATION:\n" + sys.argv[0] + " <options> input.csv \n\nOPTIONS:\n--condense-java: combine all java-related vulns in to one category.\n--level <level>: Show vulns of risk level <level>. Available options: Critical (default), High, Medium, Low, None.\n--filter-hostname <regex>: only show hostnames that match the regular expression <regex>. Suggested values: AEIO, SAS, etc. Keep things to one word, or be prepared to debug your regexes.\n--filter-plugin <list of plugin IDs>: only show the listed plugins. Separate desired plugins by commas, WITHOUT spaces. NOTE: this overrides the --level directive.\n\nEXAMPLES:\nBasic query to find all critical vulns at 1950 University, with combined Java results:\n" + sys.argv[0] + " --condense-java 1950.csv\nFind all High-rated vulnerabilities in the AEIO department, out of the more general Admissions scan:\n" + sys.argv[0] + " --condense-java --level High --filter-hostname AEIO admissions.csv\nFind all hosts which showed positive for plugins 1234 and 5678:\n" + sys.argv[0] + " --filter-plugins 1234,5678 hosts.csv\n\nAUXILIARY USAGE:\nMake this script more effective by piping the output to files like so:\n" + sys.argv[0] + " <options> input.csv > outfile.txt\nThen, compare two different outfiles (presumably from the same scan & different weeks) with:\nvimdiff <week1.txt> <week2.txt>"
 
 # parse the args
 if len(sys.argv) == 1:
@@ -32,6 +32,7 @@ condense_java = False
 level = "Critical"
 acceptable_levels = ["Critical", "High", "Medium", "Low", "None"]
 host_filter = ".*"
+plugin_filter = []
 for i in range(1, len(sys.argv)):
     if sys.argv[i] == "--condense-java":
         condense_java = True
@@ -44,6 +45,9 @@ for i in range(1, len(sys.argv)):
         i += 1
     elif sys.argv[i] == "--filter-hostname":
         host_filter = sys.argv[i+1]
+        i += 1
+    elif sys.argv[i] == "--filter-plugin":
+        plugin_filter = sys.argv[i+1].split(",")
         i += 1
 source = sys.argv[-1]
 if source[-4:] != ".csv":
@@ -60,7 +64,9 @@ with open(source, 'rb') as csvfile:
     for row in scanreader:
         if re.search(host_filter, row[HOST]) == None:
             continue
-        if row[RISK] == level:
+
+        # if there is a plugin filter and it matches, *or* if there isn't a filter and it's at the correct level
+        if (len(plugin_filter) != 0 and row[PID] in plugin_filter) or (len(plugin_filter) == 0 and row[RISK] == level):
             if row[HOST] not in host_map:
                 p = subprocess.Popen(['host', row[HOST]], stdout=subprocess.PIPE, close_fds=True)
                 output = p.stdout.read()
@@ -90,6 +96,7 @@ print "OPTIONS:"
 print "Risk Level:", level
 print "Condense Java:", str(condense_java)
 print "Host Filter:", host_filter
+print "Plugin Filter:", str(plugin_filter)
 print "\n\n"
 
 
