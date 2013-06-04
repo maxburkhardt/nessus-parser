@@ -54,7 +54,6 @@ if source[-4:] != ".csv":
 # parse the file
 vulns = {}
 name_map = {}
-name_map[-1] = "Condensed Java Vulns"
 host_map = {}
 with open(source, 'rb') as csvfile:
     scanreader = csv.reader(csvfile, delimiter=",", quotechar="\"")
@@ -75,6 +74,7 @@ with open(source, 'rb') as csvfile:
                 vulns[row[PID]] = [row[HOST]]
 
 if condense_java:
+    name_map[-1] = "Condensed Java Vulns"
     java_hosts = []
     java_vulns = []
     for vuln,hosts in vulns.iteritems():
