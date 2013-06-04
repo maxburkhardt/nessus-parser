@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import csv
 import sys
-import subprocess
+import socket
 import re
 import time
 
@@ -68,9 +68,7 @@ with open(source, 'rb') as csvfile:
         # if there is a plugin filter and it matches, *or* if there isn't a filter and it's at the correct level
         if (len(plugin_filter) != 0 and row[PID] in plugin_filter) or (len(plugin_filter) == 0 and row[RISK] == level):
             if row[HOST] not in host_map:
-                p = subprocess.Popen(['host', row[HOST]], stdout=subprocess.PIPE, close_fds=True)
-                output = p.stdout.read()
-                host_map[row[HOST]] = output.strip().split(" ")[3]
+                host_map[row[HOST]] = socket.getaddrinfo(row[HOST], 4444)[0][4][0]
             if row[PID] not in name_map:
                 name_map[row[PID]] = row[NAME]
             if row[PID] in vulns:
