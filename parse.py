@@ -80,6 +80,20 @@ with open(source, 'rb') as csvfile:
 # assemble statistics
 stat_vuln_count = len(vulns)
 stat_host_count = len(host_map)
+host_counts = {}
+most_pop_vuln = (None, 0)
+for vuln,hosts in vulns.iteritems():
+    if len(hosts) > most_pop_vuln[1]:
+        most_pop_vuln = (vuln, len(hosts))
+    for host in hosts:
+        if host not in host_counts:
+            host_counts[host] = 1
+        else:
+            host_counts[host] += 1
+most_vuln_host = (None, 0)
+for host,count in host_counts.iteritems():
+    if count > most_vuln_host[1]:
+        most_vuln_host = (host, count)
 
 
 
@@ -107,11 +121,13 @@ print "\n\n"
 print "STATISTICS:"
 print "Number of unique", level, "vulnerabilities found:", str(stat_vuln_count)
 print "Number of unique hosts found with", level, "vulnerabilities:", str(stat_host_count)
+print "Most widespread", level, "vulnerability:", name_map[most_pop_vuln[0]]
+print "Host with the most", level, "vulnerabilities:", most_vuln_host[0]
 print "\n\n"
 
 
 for vuln,hosts in vulns.iteritems():
     print "=====", name_map[vuln], "====="
     for host in hosts:
-        print host, "\t", host_map[host]
+        print host, "\t\t", host_map[host]
     print " "
