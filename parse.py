@@ -77,6 +77,13 @@ with open(source, 'rb') as csvfile:
             else:
                 vulns[row[PID]] = [row[HOST]]
 
+# assemble statistics
+stat_vuln_count = len(vulns)
+stat_host_count = len(host_map)
+
+
+
+# do java condensation if necessary
 if condense_java:
     name_map[-1] = "Condensed Java Vulns"
     java_hosts = []
@@ -95,6 +102,11 @@ print "Risk Level:", level
 print "Condense Java:", str(condense_java)
 print "Host Filter:", host_filter
 print "Plugin Filter:", str(plugin_filter)
+print "\n\n"
+
+print "STATISTICS:"
+print "Number of unique", level, "vulnerabilities found:", str(stat_vuln_count)
+print "Number of unique hosts found with", level, "vulnerabilities:", str(stat_host_count)
 print "\n\n"
 
 
