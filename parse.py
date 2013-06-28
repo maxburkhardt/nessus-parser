@@ -176,7 +176,7 @@ if ticket_recipe:
     for host,vulns in host_to_vulns.iteritems():
         print host
     proceed = raw_input("Do you want to proceed? [y/n] ").strip()
-    if proceed == "n":
+    if proceed != "y":
         print "Aborting."
         sys.exit(1)
     
@@ -191,14 +191,20 @@ if ticket_recipe:
                 print "Error! Could not log in to CalNet. Bad username/password?"
             else:
                 break
-    ticket_map = {}
+    tickets_created = []
     for host,vulns in host_to_vulns.iteritems():
         vulndata = ""
         for vuln in vulns:
             vulndata += str(vuln) + ": " + name_map[vuln] + "\n"
+        print "Creating ticket for", host
         created = rtc.create_ticket(requestor, subj_template.substitute(hostname=host), body_template.substitute(vulns=vulndata, hostname=host, ip=host_map[host]), queue)
-        ticket_map[host] = created
+        tickets_created.append([created, host, time.asctime(), queue, "https://rt.rescomp.berkeley.edu/Ticket/Display.html?id=" + str(created)])
 
-    print "The following tickets were created for the following hosts:"
-    for host,ticket in ticket_map.iteritems():
-        print host, "->", "RT#" + str(ticket), "(https://rt.rescomp.berkeley.edu/Ticket/Display.html?id=" + str(ticket) + ")"
+    filename = "nessus-ticket-generation-" + time.strftime("%m-%d.%H%M") + ".csv"
+    oh = open(filename, "w")
+    writer = csv.writer(oh, delimiter=",", quotechar="\"")
+    for ticket in tickets_created:
+        writer.writerow(ticket)
+    oh.close()
+    print "Done!"
+    print "A log of tickets created has been written to", filename
