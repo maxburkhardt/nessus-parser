@@ -57,6 +57,7 @@ if source[-4:] != ".csv":
 
 # parse the file
 vulns = {}
+host_to_vulns = {}
 name_map = {}
 host_map = {}
 with open(source, 'rb') as csvfile:
@@ -69,8 +70,16 @@ with open(source, 'rb') as csvfile:
         if (len(plugin_filter) != 0 and row[PID] in plugin_filter) or (len(plugin_filter) == 0 and row[RISK] == level):
             if row[HOST] not in host_map:
                 host_map[row[HOST]] = socket.getaddrinfo(row[HOST], 4444)[0][4][0]
+
             if row[PID] not in name_map:
                 name_map[row[PID]] = row[NAME]
+
+            if row[HOST] not in host_to_vulns:
+                host_to_vulns[row[HOST]] = set()
+                host_to_vulns[row[HOST]].add(row[PID])
+            else:
+                host_to_vulns[row[HOST]].add(row[PID])
+
             if row[PID] in vulns:
                 if row[HOST] not in vulns[row[PID]]:
                     vulns[row[PID]].append(row[HOST])
