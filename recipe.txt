@@ -1,0 +1,16 @@
+Queue: Spam
+From: maxb@rescomp.berkeley.edu
+Subject: CRITICAL-rated vulnerabilities on ${hostname}
+
+Hello!
+
+The machine at ${hostname} (${ip}) appears to be susceptible to the following vulnerabilities.
+
+${vulns} 
+As these vulnerabilities are rated "Critical", it is highly important that
+they are patched as soon as possible.
+
+If you have any further questions or concerns, please feel free to contact me.
+
+Thanks!
+Maximilian
