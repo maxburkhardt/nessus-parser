@@ -4,6 +4,9 @@ import sys
 import socket
 import re
 import time
+import getpass
+from string import Template
+from rt import RTConnect
 
 # Plugin ID,CVE,CVSS,Risk,Host,Protocol,Port,Name,Synopsis,Description,Solution,Plugin Output
 
@@ -22,7 +25,7 @@ DESCRIPTION = 9
 SOLUTION = 10
 OUTPUT = 11
 
-help_message = "NESSUS PARSER HELP\nNow fancier.\nWritten by maxb.\n\nINVOCATION:\n" + sys.argv[0] + " <options> input.csv \n\nOPTIONS:\n--condense-java: combine all java-related vulns in to one category.\n--level <level>: Show vulns of risk level <level>. Available options: Critical (default), High, Medium, Low, None.\n--filter-hostname <regex>: only show hostnames that match the regular expression <regex>. Suggested values: AEIO, SAS, etc. Keep things to one word, or be prepared to debug your regexes.\n--filter-plugin <list of plugin IDs>: only show the listed plugins. Separate desired plugins by commas, WITHOUT spaces. NOTE: this overrides the --level directive.\n\nEXAMPLES:\nBasic query to find all critical vulns at 1950 University, with combined Java results:\n" + sys.argv[0] + " --condense-java 1950.csv\nFind all High-rated vulnerabilities in the AEIO department, out of the more general Admissions scan:\n" + sys.argv[0] + " --condense-java --level High --filter-hostname AEIO admissions.csv\nFind all hosts which showed positive for plugins 1234 and 5678:\n" + sys.argv[0] + " --filter-plugins 1234,5678 hosts.csv\n\nAUXILIARY USAGE:\nMake this script more effective by piping the output to files like so:\n" + sys.argv[0] + " <options> input.csv > outfile.txt\nThen, compare two different outfiles (presumably from the same scan & different weeks) with:\nvimdiff <week1.txt> <week2.txt>"
+help_message = "NESSUS PARSER HELP\nNow fancier.\nWritten by maxb.\n\nINVOCATION:\n" + sys.argv[0] + " <options> input.csv \n\nOPTIONS:\n--condense-java: combine all java-related vulns in to one category.\n--level <level>: Show vulns of risk level <level>. Available options: Critical (default), High, Medium, Low, None.\n--filter-hostname <regex>: only show hostnames that match the regular expression <regex>. Suggested values: AEIO, SAS, etc. Keep things to one word, or be prepared to debug your regexes.\n--filter-plugin <list of plugin IDs>: only show the listed plugins. Separate desired plugins by commas, WITHOUT spaces. NOTE: this overrides the --level directive.\n--create-tickets <recipe.txt>: makes tickets for all hosts produced in the report.\n\nEXAMPLES:\nBasic query to find all critical vulns at 1950 University, with combined Java results:\n" + sys.argv[0] + " --condense-java 1950.csv\nFind all High-rated vulnerabilities in the AEIO department, out of the more general Admissions scan:\n" + sys.argv[0] + " --condense-java --level High --filter-hostname AEIO admissions.csv\nFind all hosts which showed positive for plugins 1234 and 5678:\n" + sys.argv[0] + " --filter-plugins 1234,5678 hosts.csv\n\nAUXILIARY USAGE:\nMake this script more effective by piping the output to files like so:\n" + sys.argv[0] + " <options> input.csv > outfile.txt\nThen, compare two different outfiles (presumably from the same scan & different weeks) with:\nvimdiff <week1.txt> <week2.txt>"
 
 # parse the args
 if len(sys.argv) == 1:
@@ -33,6 +36,7 @@ level = "Critical"
 acceptable_levels = ["Critical", "High", "Medium", "Low", "None"]
 host_filter = ".*"
 plugin_filter = []
+ticket_recipe = None
 for i in range(1, len(sys.argv)):
     if sys.argv[i] == "--condense-java":
         condense_java = True
@@ -48,6 +52,9 @@ for i in range(1, len(sys.argv)):
         i += 1
     elif sys.argv[i] == "--filter-plugin":
         plugin_filter = sys.argv[i+1].split(",")
+        i += 1
+    elif sys.argv[i] == "--create-tickets":
+        ticket_recipe = sys.argv[i+1]
         i += 1
 source = sys.argv[-1]
 if source[-4:] != ".csv":
@@ -140,3 +147,58 @@ for vuln,hosts in vulns.iteritems():
     for host in hosts:
         print host, "\t\t", host_map[host]
     print " "
+
+if ticket_recipe:
+    template_data = ""
+    try:
+        fh = open(ticket_recipe, "r")
+        template_data = fh.read().split("\n", 3)
+    except IOError:
+        print "Error reading template file!"
+        sys.exit(1)
+    queue = ""
+    requestor = ""
+    subject = ""
+    body = ""
+    for line in template_data:
+        temp_line = line.split(" ", 1)
+        if temp_line[0] == "Queue:":
+            queue = temp_line[1]
+        elif temp_line[0] == "From:":
+            requestor = temp_line[1]
+        elif temp_line[0] == "Subject:" or temp_line[0] == "Subj:":
+            subject = temp_line[1]
+        else:
+            body = line
+    subj_template = Template(subject)
+    body_template = Template(body)
+    print "The parser is now about to make automated tickets in the", queue, "queue for the following hosts:" 
+    for host,vulns in host_to_vulns.iteritems():
+        print host
+    proceed = raw_input("Do you want to proceed? [y/n] ").strip()
+    if proceed == "n":
+        print "Aborting."
+        sys.exit(1)
+    
+    rtc = RTConnect()
+    if rtc.token == None:
+        print "You are not currently authenticated with RT. Please enter your CalNet username and password to continue."
+        while True:
+            user = raw_input("Username: ")
+            password = getpass.getpass()  
+            rtc.authenticate(user, password)
+            if rtc.token == None:
+                print "Error! Could not log in to CalNet. Bad username/password?"
+            else:
+                break
+    ticket_map = {}
+    for host,vulns in host_to_vulns.iteritems():
+        vulndata = ""
+        for vuln in vulns:
+            vulndata += str(vuln) + ": " + name_map[vuln] + "\n"
+        created = rtc.create_ticket(requestor, subj_template.substitute(hostname=host), body_template.substitute(vulns=vulndata, hostname=host, ip=host_map[host]), queue)
+        ticket_map[host] = created
+
+    print "The following tickets were created for the following hosts:"
+    for host,ticket in ticket_map.iteritems():
+        print host, "->", "RT#" + str(ticket), "(https://rt.rescomp.berkeley.edu/Ticket/Display.html?id=" + str(ticket) + ")"
