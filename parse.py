@@ -32,13 +32,20 @@ if len(sys.argv) == 1:
     print help_message
     sys.exit(0)
 condense_java = False
+select_adobe = 0
 level = "Critical"
 acceptable_levels = ["Critical", "High", "Medium", "Low", "None"]
 host_filter = ".*"
 plugin_filter = []
 ticket_recipe = None
 for i in range(1, len(sys.argv)):
-    if sys.argv[i] == "--condense-java":
+    if sys.argv[i] == "--select-adobe":
+        select_adobe = sys.argv[i+1]
+        if select_adobe not in [0,1,2]:
+            print "ERROR: select-adobe must be 0 (no change), 1 (only adobe) or 2 (no adobe)!"
+            sys.exit(0)
+        i += 1
+    elif sys.argv[i] == "--condense-java":
         condense_java = True
     elif sys.argv[i] == "--level":
         level = sys.argv[i+1]
@@ -126,10 +133,22 @@ if condense_java:
         del vulns[vuln]
     vulns[-1] = list(set(java_hosts))
 
+# Adobe selection
+if select_adobe == 1 or select_adobe == 2:
+    adobe = {} #vulns,hosts
+    for vuln,hosts in vulns.iteritems():
+        if "Adobe" in name_map[vuln]:
+            adobe[vuln] = hosts
+    for vuln in adobe:
+        del vulns[vuln]
+    if select_adobe == 1:
+        vulns = adobe       
+
 print "Parse start time:", time.asctime()
 print "OPTIONS:"
 print "Risk Level:", level
 print "Condense Java:", str(condense_java)
+print "Select Adobve:", str(select_adobe)
 print "Host Filter:", host_filter
 print "Plugin Filter:", str(plugin_filter)
 print "\n\n"
