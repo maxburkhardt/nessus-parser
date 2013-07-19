@@ -10,7 +10,7 @@ from rt import RTConnect
 
 # Plugin ID,CVE,CVSS,Risk,Host,Protocol,Port,Name,Synopsis,Description,Solution,Plugin Output
 
-__author__ = "Maximilian Burkhardt, Lead Infosec 2012-2013"
+__author__ = "Maximilian Burkhardt, Lead Infosec 2012-2013 and Samuel Zhu, InfoSec Engineer 2013"
 
 PID = 0
 CVE = 1
@@ -25,20 +25,27 @@ DESCRIPTION = 9
 SOLUTION = 10
 OUTPUT = 11
 
-help_message = "NESSUS PARSER HELP\nNow fancier.\nWritten by maxb.\n\nINVOCATION:\n" + sys.argv[0] + " <options> input.csv \n\nOPTIONS:\n--condense-java: combine all java-related vulns in to one category.\n--level <level>: Show vulns of risk level <level>. Available options: Critical (default), High, Medium, Low, None.\n--filter-hostname <regex>: only show hostnames that match the regular expression <regex>. Suggested values: AEIO, SAS, etc. Keep things to one word, or be prepared to debug your regexes.\n--filter-plugin <list of plugin IDs>: only show the listed plugins. Separate desired plugins by commas, WITHOUT spaces. NOTE: this overrides the --level directive.\n--create-tickets <recipe.txt>: makes tickets for all hosts produced in the report.\n\nEXAMPLES:\nBasic query to find all critical vulns at 1950 University, with combined Java results:\n" + sys.argv[0] + " --condense-java 1950.csv\nFind all High-rated vulnerabilities in the AEIO department, out of the more general Admissions scan:\n" + sys.argv[0] + " --condense-java --level High --filter-hostname AEIO admissions.csv\nFind all hosts which showed positive for plugins 1234 and 5678:\n" + sys.argv[0] + " --filter-plugins 1234,5678 hosts.csv\n\nAUXILIARY USAGE:\nMake this script more effective by piping the output to files like so:\n" + sys.argv[0] + " <options> input.csv > outfile.txt\nThen, compare two different outfiles (presumably from the same scan & different weeks) with:\nvimdiff <week1.txt> <week2.txt>"
+help_message = "NESSUS PARSER HELP\nNow fancier.\nWritten by maxb.\n\nINVOCATION:\n" + sys.argv[0] + " <options> input.csv \n\nOPTIONS:\n--condense-java: combine all java-related vulns in to one category.\n--select-adobe: takes in 0 (no change to parsing), 1 (select ONLY Adobe vulns), or 2 (select only NON-Adobe vulns)\n--level <level>: Show vulns of risk level <level>. Available options: Critical (default), High, Medium, Low, None.\n--filter-hostname <regex>: only show hostnames that match the regular expression <regex>. Suggested values: AEIO, SAS, etc. Keep things to one word, or be prepared to debug your regexes.\n--filter-plugin <list of plugin IDs>: only show the listed plugins. Separate desired plugins by commas, WITHOUT spaces. NOTE: this overrides the --level directive.\n--create-tickets <recipe.txt>: makes tickets for all hosts produced in the report.\n\nEXAMPLES:\nBasic query to find all critical vulns at 1950 University, with combined Java results:\n" + sys.argv[0] + " --condense-java 1950.csv\nFind all High-rated vulnerabilities in the AEIO department, out of the more general Admissions scan:\n" + sys.argv[0] + " --condense-java --level High --filter-hostname AEIO admissions.csv\nFind all hosts which showed positive for plugins 1234 and 5678:\n" + sys.argv[0] + " --filter-plugins 1234,5678 hosts.csv\n\nAUXILIARY USAGE:\nMake this script more effective by piping the output to files like so:\n" + sys.argv[0] + " <options> input.csv > outfile.txt\nThen, compare two different outfiles (presumably from the same scan & different weeks) with:\nvimdiff <week1.txt> <week2.txt>"
 
 # parse the args
 if len(sys.argv) == 1:
     print help_message
     sys.exit(0)
 condense_java = False
+select_adobe = 0
 level = "Critical"
 acceptable_levels = ["Critical", "High", "Medium", "Low", "None"]
 host_filter = ".*"
 plugin_filter = []
 ticket_recipe = None
 for i in range(1, len(sys.argv)):
-    if sys.argv[i] == "--condense-java":
+    if sys.argv[i] == "--select-adobe":
+        select_adobe = int(sys.argv[i+1])
+        if select_adobe not in [0,1,2]:
+            print "ERROR: select-adobe must be 0 (no change), 1 (only adobe) or 2 (no adobe)!"
+            sys.exit(0)
+        i += 1
+    elif sys.argv[i] == "--condense-java":
         condense_java = True
     elif sys.argv[i] == "--level":
         level = sys.argv[i+1]
@@ -126,10 +133,22 @@ if condense_java:
         del vulns[vuln]
     vulns[-1] = list(set(java_hosts))
 
+# Adobe selection
+if select_adobe == 1 or select_adobe == 2:
+    adobe = {} #vulns,hosts
+    for vuln,hosts in vulns.iteritems():
+        if "Adobe" in name_map[vuln]:
+            adobe[vuln] = hosts
+    for vuln in adobe:
+        del vulns[vuln]
+    if select_adobe == 1: #if proper adobe option selected, only display adobe vulns
+        vulns = adobe  
+
 print "Parse start time:", time.asctime()
 print "OPTIONS:"
 print "Risk Level:", level
 print "Condense Java:", str(condense_java)
+print "Select Adobe:", str(select_adobe)
 print "Host Filter:", host_filter
 print "Plugin Filter:", str(plugin_filter)
 print "\n\n"
@@ -141,10 +160,19 @@ print "Most widespread", level, "vulnerability:", name_map[most_pop_vuln[0]]
 print "Host with the most", level, "vulnerabilities:", most_vuln_host[0]
 print "\n\n"
 
-
+# Vulnerability List Pre-processing
+vuln_diff = []
+vuln_diff = set(name_map.keys()) - set(vulns.keys())    # get keys in name_map that are not in vulns
+for vuln in vuln_diff:                                  # remove keys in name_map that are not in vulns
+    del name_map[vuln]
+print_dict = {}                                         # create new dict to print things
 for vuln,hosts in vulns.iteritems():
-    print "=====", name_map[vuln], "====="
-    for host in hosts:
+    print_dict[name_map[vuln]] = hosts
+printList = sorted(print_dict.items())
+
+for i in range(len(printList)):                         # go through printList in order and print things!
+    print "=====", printList[i][0], "====="
+    for host in printList[i][1]:
         print host, "\t\t", host_map[host]
     print " "
 
