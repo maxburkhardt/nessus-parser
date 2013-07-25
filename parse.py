@@ -25,7 +25,36 @@ DESCRIPTION = 9
 SOLUTION = 10
 OUTPUT = 11
 
-help_message = "NESSUS PARSER HELP\nNow fancier.\nWritten by maxb.\n\nINVOCATION:\n" + sys.argv[0] + " <options> input.csv \n\nOPTIONS:\n--condense-java: combine all java-related vulns in to one category.\n--select-adobe: takes in 0 (no change to parsing), 1 (select ONLY Adobe vulns), or 2 (select only NON-Adobe vulns)\n--level <level>: Show vulns of risk level <level>. Available options: Critical (default), High, Medium, Low, None.\n--filter-hostname <regex>: only show hostnames that match the regular expression <regex>. Suggested values: AEIO, SAS, etc. Keep things to one word, or be prepared to debug your regexes.\n--filter-plugin <list of plugin IDs>: only show the listed plugins. Separate desired plugins by commas, WITHOUT spaces. NOTE: this overrides the --level directive.\n--create-tickets <recipe.txt>: makes tickets for all hosts produced in the report.\n\nEXAMPLES:\nBasic query to find all critical vulns at 1950 University, with combined Java results:\n" + sys.argv[0] + " --condense-java 1950.csv\nFind all High-rated vulnerabilities in the AEIO department, out of the more general Admissions scan:\n" + sys.argv[0] + " --condense-java --level High --filter-hostname AEIO admissions.csv\nFind all hosts which showed positive for plugins 1234 and 5678:\n" + sys.argv[0] + " --filter-plugins 1234,5678 hosts.csv\n\nAUXILIARY USAGE:\nMake this script more effective by piping the output to files like so:\n" + sys.argv[0] + " <options> input.csv > outfile.txt\nThen, compare two different outfiles (presumably from the same scan & different weeks) with:\nvimdiff <week1.txt> <week2.txt>"
+help_message = """
+NESSUS PARSER HELP
+Now fancier.
+Written by maxb.
+
+INVOCATION:
+{} <options> input.csv 
+
+OPTIONS:
+--condense-java: combine all java-related vulns in to one category.
+--select-adobe: takes in 0 (no change to parsing), 1 (select ONLY Adobe vulns), or 2 (select only NON-Adobe vulns)
+--level <level>: Show vulns of risk level <level>. Available options: Critical (default), High, Medium, Low, None.
+--filter-hostname <regex>: only show hostnames that match the regular expression <regex>. Suggested values: AEIO, SAS, etc. Keep things to one word, or be prepared to debug your regexes.
+--filter-plugin <list of plugin IDs>: only show the listed plugins. Separate desired plugins by commas, WITHOUT spaces. NOTE: this overrides the --level directive.
+--create-tickets <recipe.txt>: makes tickets for all hosts produced in the report.
+
+EXAMPLES:
+Basic query to find all critical vulns at 1950 University, with combined Java results:
+{} --condense-java 1950.csv
+Find all High-rated vulnerabilities in the AEIO department, out of the more general Admissions scan:
+{} --condense-java --level High --filter-hostname AEIO admissions.csv
+Find all hosts which showed positive for plugins 1234 and 5678:
+{} --filter-plugins 1234,5678 hosts.csv
+
+AUXILIARY USAGE:
+Make this script more effective by piping the output to files like so:
+{} <options> input.csv > outfile.txt
+Then, compare two different outfiles (presumably from the same scan & different weeks) with:
+vimdiff <week1.txt> <week2.txt>"
+""".format(sys.argv[0], sys.argv[0], sys.argv[0], sys.argv[0], sys.argv[0]) 
 
 # parse the args
 if len(sys.argv) == 1:
