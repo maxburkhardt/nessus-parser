@@ -112,7 +112,10 @@ with open(source, 'rb') as csvfile:
         # if there is a plugin filter and it matches, *or* if there isn't a filter and it's at the correct level
         if (len(plugin_filter) != 0 and row[PID] in plugin_filter) or (len(plugin_filter) == 0 and row[RISK] == level):
             if row[HOST] not in host_map:
-                host_map[row[HOST]] = socket.getaddrinfo(row[HOST], 4444)[0][4][0]
+                try:
+                    host_map[row[HOST]] = socket.getaddrinfo(row[HOST], 4444)[0][4][0]
+                except:
+                    host_map[row[HOST]] = "IP N/A"
 
             if row[PID] not in name_map:
                 name_map[row[PID]] = row[NAME]
