@@ -31,7 +31,7 @@ Now fancier.
 Written by maxb.
 
 INVOCATION:
-{} <options> input.csv 
+{0} <options> input.csv 
 
 OPTIONS:
 --condense-java: combine all java-related vulns in to one category.
@@ -43,18 +43,18 @@ OPTIONS:
 
 EXAMPLES:
 Basic query to find all critical vulns at 1950 University, with combined Java results:
-{} --condense-java 1950.csv
+{0} --condense-java 1950.csv
 Find all High-rated vulnerabilities in the AEIO department, out of the more general Admissions scan:
-{} --condense-java --level High --filter-hostname AEIO admissions.csv
+{0} --condense-java --level High --filter-hostname AEIO admissions.csv
 Find all hosts which showed positive for plugins 1234 and 5678:
-{} --filter-plugins 1234,5678 hosts.csv
+{0} --filter-plugins 1234,5678 hosts.csv
 
 AUXILIARY USAGE:
 Make this script more effective by piping the output to files like so:
-{} <options> input.csv > outfile.txt
+{0} <options> input.csv > outfile.txt
 Then, compare two different outfiles (presumably from the same scan & different weeks) with:
 vimdiff <week1.txt> <week2.txt>"
-""".format(sys.argv[0], sys.argv[0], sys.argv[0], sys.argv[0], sys.argv[0]) 
+""".format(sys.argv[0])
 
 # parse the args
 if len(sys.argv) == 1:
