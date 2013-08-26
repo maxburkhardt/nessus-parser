@@ -65,6 +65,7 @@ select_adobe = 0
 level = "Critical"
 acceptable_levels = ["Critical", "High", "Medium", "Low", "None"]
 host_filter = ".*"
+filter_list = []
 plugin_filter = []
 ticket_recipe = None
 for i in range(1, len(sys.argv)):
@@ -92,6 +93,11 @@ for i in range(1, len(sys.argv)):
     elif sys.argv[i] == "--create-tickets":
         ticket_recipe = sys.argv[i+1]
         i += 1
+    elif sys.argv[i] == "--filter-group":
+        hosts = open(sys.argv[i+1],'r')
+        for host in hosts:
+            filter_list.append(host.strip())
+        i += 1
 source = sys.argv[-1]
 if source[-4:] != ".csv":
     print "ERROR: last argument must be a CSV file with a '.csv' extension!"
@@ -103,10 +109,21 @@ vulns = {}
 host_to_vulns = {}
 name_map = {}
 host_map = {}
+host_flag = True   #flag to determine whether or not a match has been found in filter_list
+print len(filter_list)
 with open(source, 'rb') as csvfile:
     scanreader = csv.reader(csvfile, delimiter=",", quotechar="\"")
     for row in scanreader:
-        if re.search(host_filter, row[HOST]) == None:
+        if len(filter_list) != 0:  #if filter_list isn't empty, that means we're using group searching
+            host_flag = False
+            for f in filter_list:
+                if re.search(f, row[HOST]) != None: # if we find a matching filter, break out and flip the flag
+                    host_flag = True
+                    break
+        elif re.search(host_filter, row[HOST]) == None:
+            continue
+
+        if host_flag == False:
             continue
 
         # if there is a plugin filter and it matches, *or* if there isn't a filter and it's at the correct level
@@ -183,6 +200,7 @@ print "Condense Java:", str(condense_java)
 print "Select Adobe:", str(select_adobe)
 print "Host Filter:", host_filter
 print "Plugin Filter:", str(plugin_filter)
+print "Group Filter:", str(filter_list)
 print "\n\n"
 
 print "STATISTICS:"
