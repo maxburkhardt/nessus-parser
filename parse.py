@@ -25,7 +25,7 @@ DESCRIPTION = 9
 SOLUTION = 10
 OUTPUT = 11
 
-help_message = "NESSUS PARSER HELP\nNow fancier.\nWritten by maxb.\n\nINVOCATION:\n" + sys.argv[0] + " <options> input.csv \n\nOPTIONS:\n--condense-java: combine all java-related vulns in to one category.\n--select-adobe: takes in 0 (no change to parsing), 1 (select ONLY Adobe vulns), or 2 (select only NON-Adobe vulns)\n--level <level>: Show vulns of risk level <level>. Available options: Critical (default), High, Medium, Low, None.\n--filter-hostname <regex>: only show hostnames that match the regular expression <regex>. Suggested values: AEIO, SAS, etc. Keep things to one word, or be prepared to debug your regexes.\n--filter-plugin <list of plugin IDs>: only show the listed plugins. Separate desired plugins by commas, WITHOUT spaces. NOTE: this overrides the --level directive.\n--create-tickets <recipe.txt>: makes tickets for all hosts produced in the report.\n\nEXAMPLES:\nBasic query to find all critical vulns at 1950 University, with combined Java results:\n" + sys.argv[0] + " --condense-java 1950.csv\nFind all High-rated vulnerabilities in the AEIO department, out of the more general Admissions scan:\n" + sys.argv[0] + " --condense-java --level High --filter-hostname AEIO admissions.csv\nFind all hosts which showed positive for plugins 1234 and 5678:\n" + sys.argv[0] + " --filter-plugins 1234,5678 hosts.csv\n\nAUXILIARY USAGE:\nMake this script more effective by piping the output to files like so:\n" + sys.argv[0] + " <options> input.csv > outfile.txt\nThen, compare two different outfiles (presumably from the same scan & different weeks) with:\nvimdiff <week1.txt> <week2.txt>"
+help_message = "NESSUS PARSER HELP\nNow fancier.\nWritten by maxb.\n\nINVOCATION:\n" + sys.argv[0] + " <options> input.csv \n\nOPTIONS:\n--condense-java: combine all java-related vulns in to one category.\n--select-adobe: takes in 0 (no change to parsing), 1 (select ONLY Adobe vulns), or 2 (select only NON-Adobe vulns)\n--level <level>: Show vulns of risk level <level>. Available options: Critical (default), High, Medium, Low, None.\n--filter-hostname <regex>: only show hostnames that match the regular expression <regex>. Suggested values: AEIO, SAS, etc. Keep things to one word, or be prepared to debug your regexes.\n--filter-group <txt file>: only show hostnames that match a txt file of regex's. This is essentially a vesion of filter-hostname that works on multiple regexes.\n--filter-plugin <list of plugin IDs>: only show the listed plugins. Separate desired plugins by commas, WITHOUT spaces. NOTE: this overrides the --level directive.\n--create-tickets <recipe.txt>: makes tickets for all hosts produced in the report.\n\nEXAMPLES:\nBasic query to find all critical vulns at 1950 University, with combined Java results:\n" + sys.argv[0] + " --condense-java 1950.csv\nFind all High-rated vulnerabilities in the AEIO department, out of the more general Admissions scan:\n" + sys.argv[0] + " --condense-java --level High --filter-hostname AEIO admissions.csv\nFind all hosts which showed positive for plugins 1234 and 5678:\n" + sys.argv[0] + " --filter-plugins 1234,5678 hosts.csv\n\nAUXILIARY USAGE:\nMake this script more effective by piping the output to files like so:\n" + sys.argv[0] + " <options> input.csv > outfile.txt\nThen, compare two different outfiles (presumably from the same scan & different weeks) with:\nvimdiff <week1.txt> <week2.txt>"
 
 # parse the args
 if len(sys.argv) == 1:
@@ -36,7 +36,7 @@ select_adobe = 0
 level = "Critical"
 acceptable_levels = ["Critical", "High", "Medium", "Low", "None"]
 host_filter = ".*"
-host_filters = []
+filter_list = []
 plugin_filter = []
 ticket_recipe = None
 for i in range(1, len(sys.argv)):
@@ -67,7 +67,7 @@ for i in range(1, len(sys.argv)):
     elif sys.argv[i] == "--filter-group":
         hosts = open(sys.argv[i+1],'r')
         for host in hosts:
-            host_filter.append(host)
+            filter_list.append(host)
         i += 1
 source = sys.argv[-1]
 if source[-4:] != ".csv":
@@ -80,12 +80,12 @@ vulns = {}
 host_to_vulns = {}
 name_map = {}
 host_map = {}
-host_flag = False   #flag to determine whether or not a match has been found in host_filters
+host_flag = False   #flag to determine whether or not a match has been found in filter_list
 with open(source, 'rb') as csvfile:
     scanreader = csv.reader(csvfile, delimiter=",", quotechar="\"")
     for row in scanreader:
-        if len(host_filters) != 0:  #if host_filters isn't empty, that means we're using group searching
-            for f in host_filters:
+        if len(filter_list) != 0:  #if filter_list isn't empty, that means we're using group searching
+            for f in filter_list:
                 if re.search(f, row[HOST]) != None: # if we find a matching filter, break out and flip the flag
                     host_flag = True
                     break
