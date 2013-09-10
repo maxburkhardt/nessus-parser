@@ -7,6 +7,7 @@ import time
 import getpass
 from string import Template
 from rt import RTConnect
+from xlwt import Workbook, easyxf
 
 # Plugin ID,CVE,CVSS,Risk,Host,Protocol,Port,Name,Synopsis,Description,Solution,Plugin Output
 
@@ -41,6 +42,7 @@ OPTIONS:
 --filter-plugin <list of plugin IDs>: only show the listed plugins. Separate desired plugins by commas, WITHOUT spaces. NOTE: this overrides the --level directive.
 --filter-group <group filename>: read in regular expressions from the given file, and only process hosts that match one of them. 
 --create-tickets <recipe.txt>: makes tickets for all hosts produced in the report.
+--create-excel <filename.xls>: creates an Excel file with the information produced by this script.
 
 EXAMPLES:
 Basic query to find all critical vulns at 1950 University, with combined Java results:
@@ -69,6 +71,7 @@ host_filter = ".*"
 filter_list = []
 plugin_filter = []
 ticket_recipe = None
+excel_file = None
 for i in range(1, len(sys.argv)):
     if sys.argv[i] == "--select-adobe":
         select_adobe = int(sys.argv[i+1])
@@ -98,6 +101,9 @@ for i in range(1, len(sys.argv)):
         hosts = open(sys.argv[i+1],'r')
         for host in hosts:
             filter_list.append(host.strip())
+        i += 1
+    elif sys.argv[i] == "--create-excel":
+        excel_file = sys.argv[i+1]
         i += 1
 source = sys.argv[-1]
 if source[-4:] != ".csv":
@@ -133,20 +139,23 @@ with open(source, 'rb') as csvfile:
 
         # if there is a plugin filter and it matches, *or* if there isn't a filter and it's at the correct level
         if (len(plugin_filter) != 0 and row[PID] in plugin_filter) or (len(plugin_filter) == 0 and row[RISK] == level):
+
+            # create host_map entries
             if row[HOST] not in host_map:
                 try:
                     host_map[row[HOST]] = socket.getaddrinfo(row[HOST], 4444)[0][4][0]
                 except:
                     host_map[row[HOST]] = "IP N/A"
 
+            # create name_map entries
             if row[PID] not in name_map:
                 name_map[row[PID]] = row[NAME]
 
             if row[HOST] not in host_to_vulns:
                 host_to_vulns[row[HOST]] = set()
-                host_to_vulns[row[HOST]].add(row[PID])
+                host_to_vulns[row[HOST]].add(-1 if condense_java and "Java" in name_map[row[PID]] else row[PID])
             else:
-                host_to_vulns[row[HOST]].add(row[PID])
+                host_to_vulns[row[HOST]].add(-1 if condense_java and "Java" in name_map[row[PID]] else row[PID])
 
             if row[PID] in vulns:
                 if row[HOST] not in vulns[row[PID]]:
@@ -176,7 +185,7 @@ for host,count in host_counts.iteritems():
 
 # do java condensation if necessary
 if condense_java:
-    name_map[-1] = "Condensed Java Vulns"
+    name_map[-1] = "Java Vulnerability"
     java_hosts = []
     java_vulns = []
     for vuln,hosts in vulns.iteritems():
@@ -295,3 +304,35 @@ if ticket_recipe:
     oh.close()
     print "Done!"
     print "A log of tickets created has been written to", filename
+
+if excel_file:
+    print "Making an excel file in", excel_file, "!"
+    book = Workbook()
+    sheet = book.add_sheet("Nessus Vulnerabilities", cell_overwrite_ok=True)
+    default_style = easyxf("font: name Calibri, height 240;")
+    header_style = easyxf("font: name Calibri, height 240; pattern: pattern diamonds, fore_colour pale_blue;")
+    header = sheet.row(0)
+    header.write(0, "Hostname", header_style)
+    header.write(1, "IP", header_style)
+    header.write(2, "Name", header_style)
+    for i in range(len(vulns.keys())):
+        header.write(i + 3, " ", header_style)
+    header.height = 300
+    row_count = 1
+    col_count = 3
+    sheet.col(0).width = 10000
+    sheet.col(1).width = 5000
+    sheet.col(2).width = 10000
+    for vuln in vulns.keys():
+        sheet.col(col_count).width = 300 * len(name_map[vuln])
+        col_count += 1
+    for host in host_to_vulns.keys():
+        row = sheet.row(row_count)
+        row.write(0, host, default_style)
+        row.write(1, host_map[host], default_style)
+        for vuln in host_to_vulns[host]:
+            row.write(vulns.keys().index(vuln) + 3, name_map[vuln], easyxf("font: name Calibri, height 240;"
+                "pattern: pattern solid, fore_colour red;"))
+        row.height = 300
+        row_count += 1
+    book.save(excel_file)
