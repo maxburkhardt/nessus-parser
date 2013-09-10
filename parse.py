@@ -39,6 +39,7 @@ OPTIONS:
 --level <level>: Show vulns of risk level <level>. Available options: Critical (default), High, Medium, Low, None.
 --filter-hostname <regex>: only show hostnames that match the regular expression <regex>. Suggested values: AEIO, SAS, etc. Keep things to one word, or be prepared to debug your regexes.
 --filter-plugin <list of plugin IDs>: only show the listed plugins. Separate desired plugins by commas, WITHOUT spaces. NOTE: this overrides the --level directive.
+--filter-group <group filename>: read in regular expressions from the given file, and only process hosts that match one of them. 
 --create-tickets <recipe.txt>: makes tickets for all hosts produced in the report.
 
 EXAMPLES:
@@ -110,19 +111,24 @@ host_to_vulns = {}
 name_map = {}
 host_map = {}
 host_flag = True   #flag to determine whether or not a match has been found in filter_list
+host_cache = set()
+ignore_host_cache = set()
 with open(source, 'rb') as csvfile:
     scanreader = csv.reader(csvfile, delimiter=",", quotechar="\"")
     for row in scanreader:
         if len(filter_list) != 0:  #if filter_list isn't empty, that means we're using group searching
-            host_flag = False
-            for f in filter_list:
-                if re.search(f, row[HOST]) != None: # if we find a matching filter, break out and flip the flag
-                    host_flag = True
-                    break
+            if row[HOST] in host_cache:
+                pass
+            elif row[HOST] in ignore_host_cache:
+                continue
+            else: 
+                for f in filter_list:
+                    if re.search(f, row[HOST]) != None:
+                        host_cache.add(row[HOST])
+                        break
+                ignore_host_cache.add(row[HOST])
+                continue
         elif re.search(host_filter, row[HOST]) == None:
-            continue
-
-        if host_flag == False:
             continue
 
         # if there is a plugin filter and it matches, *or* if there isn't a filter and it's at the correct level
@@ -201,6 +207,10 @@ print "Host Filter:", host_filter
 print "Plugin Filter:", str(plugin_filter)
 print "Group Filter:", str(filter_list)
 print "\n\n"
+
+if len(vulns.keys()) == 0:
+    print "No vulnerabilities found."
+    sys.exit(0)
 
 print "STATISTICS:"
 print "Number of unique", level, "vulnerabilities found:", str(stat_vuln_count)
