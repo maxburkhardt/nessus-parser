@@ -110,7 +110,6 @@ host_to_vulns = {}
 name_map = {}
 host_map = {}
 host_flag = True   #flag to determine whether or not a match has been found in filter_list
-print len(filter_list)
 with open(source, 'rb') as csvfile:
     scanreader = csv.reader(csvfile, delimiter=",", quotechar="\"")
     for row in scanreader:
