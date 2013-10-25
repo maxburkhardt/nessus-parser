@@ -43,6 +43,7 @@ OPTIONS:
 --filter-group <group filename>: read in regular expressions from the given file, and only process hosts that match one of them. 
 --create-tickets <recipe.txt>: makes tickets for all hosts produced in the report.
 --create-excel <filename.xls>: creates an Excel file with the information produced by this script.
+--alpha: if creating an excel sheet, this will alphabetize the output of the vulnerability names, otherwise, the excel sheet just uses vulnerability IDs
 
 EXAMPLES:
 Basic query to find all critical vulns at 1950 University, with combined Java results:
@@ -72,6 +73,7 @@ filter_list = []
 plugin_filter = []
 ticket_recipe = None
 excel_file = None
+alpha = False
 for i in range(1, len(sys.argv)):
     if sys.argv[i] == "--select-adobe":
         select_adobe = int(sys.argv[i+1])
@@ -104,7 +106,14 @@ for i in range(1, len(sys.argv)):
         i += 1
     elif sys.argv[i] == "--create-excel":
         excel_file = sys.argv[i+1]
-        i += 1
+        if excel_file[-3:] != 'xls':
+            print "Using auto-generated name for Excel sheet"
+            today = time.localtime()
+            excel_file = level.upper() + "-vulns-" + str(today.tm_mon) + str(today.tm_mday) + str(today.tm_year) + ".xls"
+        else:
+            i += 1
+    elif sys.argv[i] == "--alpha":
+        alpha = True
 source = sys.argv[-1]
 if source[-4:] != ".csv":
     print "ERROR: last argument must be a CSV file with a '.csv' extension!"
@@ -112,7 +121,7 @@ if source[-4:] != ".csv":
     sys.exit(0)
 
 # parse the file
-vulns = {}
+vulns = {}              #vulns to hosts, key is vuln ID, value is list of hosts
 host_to_vulns = {}
 name_map = {}
 host_map = {}
@@ -305,34 +314,47 @@ if ticket_recipe:
     print "Done!"
     print "A log of tickets created has been written to", filename
 
+# doing excel things!
 if excel_file:
     print "Making an excel file in", excel_file, "!"
     book = Workbook()
-    sheet = book.add_sheet("Nessus Vulnerabilities", cell_overwrite_ok=True)
+    sheet = book.add_sheet("Nessus Vulnerabilities", cell_overwrite_ok=True)        #creating sheet + fonts
     default_style = easyxf("font: name Calibri, height 240;")
     header_style = easyxf("font: name Calibri, height 240; pattern: pattern diamonds, fore_colour pale_blue;")
     header = sheet.row(0)
-    header.write(0, "Hostname", header_style)
+    header.write(0, "Hostname", header_style)                    #headers
     header.write(1, "IP", header_style)
     header.write(2, "Name", header_style)
     for i in range(len(vulns.keys())):
         header.write(i + 3, " ", header_style)
     header.height = 300
     row_count = 1
-    col_count = 3
+    col_count = 2
     sheet.col(0).width = 10000
     sheet.col(1).width = 5000
     sheet.col(2).width = 10000
-    for vuln in vulns.keys():
-        sheet.col(col_count).width = 300 * len(name_map[vuln])
-        col_count += 1
+    if alpha:                       # we're sorting by name, not plugin id
+        sortedvulns = sorted(name_map.values())
+        for vuln in sortedvulns:                                    #setting widths for vulnerability names
+            sheet.col(col_count).width = 300 * len(vuln)
+            col_count += 1
+    else:
+        sortedvulns = sorted(vulns.keys())
+        for vuln in sortedvulns:
+            sheet.col(col_count).width = 300 * (len(str(vuln)) + 2)
+            col_count += 1
     for host in host_to_vulns.keys():
         row = sheet.row(row_count)
         row.write(0, host, default_style)
         row.write(1, host_map[host], default_style)
-        for vuln in host_to_vulns[host]:
-            row.write(vulns.keys().index(vuln) + 3, name_map[vuln], easyxf("font: name Calibri, height 240;"
-                "pattern: pattern solid, fore_colour red;"))
+        if alpha:                                   # pull from alphabetical list, not plugin list
+            for vuln in host_to_vulns[host]:
+                row.write(sortedvulns.index(name_map[vuln]) + 2, name_map[vuln], easyxf("font: name Calibri, height 240;"
+                    "pattern: pattern solid, fore_colour red;"))
+        else:
+            for vuln in host_to_vulns[host]:
+                row.write(sortedvulns.index(vuln) + 2, vuln, easyxf("font: name Calibri, height 240;"
+                    "pattern: pattern solid, fore_colour red;"))
         row.height = 300
         row_count += 1
     book.save(excel_file)
