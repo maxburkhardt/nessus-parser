@@ -309,6 +309,7 @@ if ticket_recipe:
     print "Done!"
     print "A log of tickets created has been written to", filename
 
+# doing excel things!
 if excel_file:
     if excel_file[-3:] != 'xls':
         print "Using auto-generated name for Excel sheet"
@@ -331,7 +332,7 @@ if excel_file:
     sheet.col(0).width = 10000
     sheet.col(1).width = 5000
     sheet.col(2).width = 10000
-    if alpha:
+    if alpha:                       # we're sorting by name, not plugin id
         sortedvulns = sorted(name_map.values())
         for vuln in sortedvulns:                                    #setting widths for vulnerability names
             sheet.col(col_count).width = 300 * len(vuln)
@@ -345,7 +346,7 @@ if excel_file:
         row = sheet.row(row_count)
         row.write(0, host, default_style)
         row.write(1, host_map[host], default_style)
-        if alpha:
+        if alpha:                                   # pull from alphabetical list, not plugin list
             for vuln in host_to_vulns[host]:
                 row.write(sortedvulns.index(name_map[vuln]) + 2, name_map[vuln], easyxf("font: name Calibri, height 240;"
                     "pattern: pattern solid, fore_colour red;"))
