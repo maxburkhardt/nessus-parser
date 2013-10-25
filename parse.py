@@ -106,7 +106,12 @@ for i in range(1, len(sys.argv)):
         i += 1
     elif sys.argv[i] == "--create-excel":
         excel_file = sys.argv[i+1]
-        i += 1
+        if excel_file[-3:] != 'xls':
+            print "Using auto-generated name for Excel sheet"
+            today = time.localtime()
+            excel_file = level.upper() + "-vulns-" + str(today.tm_mon) + str(today.tm_mday) + str(today.tm_year) + ".xls"
+        else:
+            i += 1
     elif sys.argv[i] == "--alpha":
         alpha = True
 source = sys.argv[-1]
@@ -311,10 +316,6 @@ if ticket_recipe:
 
 # doing excel things!
 if excel_file:
-    if excel_file[-3:] != 'xls':
-        print "Using auto-generated name for Excel sheet"
-        today = time.localtime()
-        excel_file = level.upper() + "-vulns-" + str(today.tm_mon) + str(today.tm_mday) + str(today.tm_year) + ".xls"
     print "Making an excel file in", excel_file, "!"
     book = Workbook()
     sheet = book.add_sheet("Nessus Vulnerabilities", cell_overwrite_ok=True)        #creating sheet + fonts
