@@ -351,7 +351,7 @@ if excel_file:
             col_count += 1
     else:
         sortedvulns = sorted(vulns.keys())
-        for vuln in sortedvulns.iteritems():
+        for vuln in sortedvulns:
             sheet.col(col_count).width = 300 * (len(str(vuln)) + 2)
             col_count += 1
     for host in host_to_vulns.keys():
