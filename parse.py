@@ -334,7 +334,18 @@ if excel_file:
     sheet.col(1).width = 5000
     sheet.col(2).width = 10000
     if alpha:                       # we're sorting by name, not plugin id
-        sortedvulns = sorted(name_map.values())
+        collvulns = {}
+        for vuln,name in name_map.iteritems():              # Go through each vuln in name_map, collate ones to be collated
+            if name[:2] == "MS":                # This should really be refactored to pull from some sort of file in the future
+                name = "Needs Windows Updates"
+            elif name.find("<") != -1:
+                name = "Outdated " + name.split("<")[0]
+            collvulns[vuln] = name
+        collatedvulns = collvulns
+        #for vuln,name in collvulns.iteritems():     # TODO: look through the vulns again to find tags for outdated software that don't have < signs
+        #    if name.startswith("Outdated "):
+        #        searchname = name.split("Outdated ")[1]
+        sortedvulns = sorted(list(set(collatedvulns.values())))                #make a list of the sorted + collated vulnerabilities
         for vuln in sortedvulns:                                    #setting widths for vulnerability names
             sheet.col(col_count).width = 300 * len(vuln)
             col_count += 1
@@ -349,7 +360,7 @@ if excel_file:
         row.write(1, host_map[host], default_style)
         if alpha:                                   # pull from alphabetical list, not plugin list
             for vuln in host_to_vulns[host]:
-                row.write(sortedvulns.index(name_map[vuln]) + 2, name_map[vuln], easyxf("font: name Calibri, height 240;"
+                row.write(sortedvulns.index(collatedvulns[vuln]) + 2, collatedvulns[vuln], easyxf("font: name Calibri, height 240;"
                     "pattern: pattern solid, fore_colour red;"))
         else:
             for vuln in host_to_vulns[host]:
