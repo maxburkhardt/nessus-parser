@@ -25,6 +25,4 @@ def mutate(csv_data, environ):
             hosts_with_java.add(host)
 
         # now we'll make the vuln_to_hosts dictionary match
-        for plugin in java_plugins:
-            del csv_data.vuln_to_hosts[plugin]
-        csv_data.vuln_to_hosts['JAVA'] = hosts_with_java
+        csv_data.rebuild_vuln_to_hosts()

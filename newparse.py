@@ -24,6 +24,9 @@ if __name__ == '__main__':
     if args.level:
         from mutators import level
         level.mutate(csv_data, args.level, environ)
+    if args.hostname_regex:
+        from mutators import hostname_regex
+        hostname_regex.mutate(csv_data, args.hostname_regex, environ)
 
     # process output modules
     from output import text
