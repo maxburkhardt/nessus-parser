@@ -2,8 +2,8 @@
 ## This script marshals the other parts of the parser
 
 from reader import read
-from statistics import stat_compute
 from arguments import parse_arguments
+import statistics
 
 if __name__ == '__main__':
     args = parse_arguments()
@@ -34,6 +34,9 @@ if __name__ == '__main__':
     if args.plugin_list:
         from mutators import plugin_list
         plugin_list.mutate(csv_data, args.plugin_list, environ)
+
+    # print some statistics
+    statistics.output(csv_data)
 
     # process output modules
     from output import text

@@ -22,3 +22,12 @@ def stat_compute(vuln_to_hosts, host_to_vulns):
         if count > most_vuln_host[1]:
             most_vuln_host = (host, count)
     return (stat_vuln_count, stat_host_count, most_pop_vuln[0], most_vuln_host[0])
+
+def output(csv_data): 
+    data = stat_compute(csv_data.vuln_to_hosts, csv_data.host_to_vulns)
+    print "STATISTICS:"
+    print "Number of unique vulnerabilities found:", str(data[0])
+    print "Number of unique hosts found with vulnerabilities:", str(data[1])
+    print "Most widespread vulnerability:", csv_data.id_to_name[data[2]]
+    print "Host with the most vulnerabilities:", data[3]
+    print " "
