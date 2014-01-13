@@ -17,13 +17,13 @@ if __name__ == '__main__':
     # process mutators, according to which ones were selected
     if args.condense_java:
         from mutators import condense_java
-        csv_data = condense_java.mutate(csv_data, environ)
+        condense_java.mutate(csv_data, environ)
     if args.select_adobe:
         from mutators import select_adobe
-        csv_data = select_adobe.mutate(csv_data, environ)
+        select_adobe.mutate(csv_data, args.select_adobe, environ)
     if args.level:
         from mutators import level
-        csv_data = level.mutate(csv_data, args.level, environ)
+        level.mutate(csv_data, args.level, environ)
 
     # process output modules
     from output import text

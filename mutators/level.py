@@ -12,10 +12,4 @@ def mutate(csv_data, level, environ):
         del csv_data.vuln_to_hosts[vuln]
     
     # rebuild host_to_vulns
-    csv_data.host_to_vulns = {}
-    for vuln,hosts in csv_data.vuln_to_hosts.iteritems():
-        for host in hosts:
-            if host not in csv_data.host_to_vulns:
-                csv_data.host_to_vulns[host] = set()
-            csv_data.host_to_vulns[host].add(vuln)
-    return csv_data
+    csv_data.rebuild_host_to_vulns() 

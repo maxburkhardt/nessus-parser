@@ -28,5 +28,3 @@ def mutate(csv_data, environ):
         for plugin in java_plugins:
             del csv_data.vuln_to_hosts[plugin]
         csv_data.vuln_to_hosts['JAVA'] = hosts_with_java
-
-    return csv_data
