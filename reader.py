@@ -6,6 +6,7 @@
 ## 4. host_to_ip, a dictionary from hostname -> IP address
 import csv
 import socket
+from scandata import ScanData
 
 # Plugin ID,CVE,CVSS,Risk,Host,Protocol,Port,Name,Synopsis,Description,Solution,Plugin Output
 
@@ -29,29 +30,41 @@ def read(filename):
     vuln_to_hosts = {}
     id_to_name = {}
     host_to_ip = {}
+    id_to_severity = {}
 
-    with open(filename, 'rb') as csvfile:
-        scanreader = csv.reader(csvfile, delimiter=",", quotechar="\"")
-        for row in scanreader:
-            # first get the IP address mapping (if not already discovered) and put it in host_to_ip
-            if row[HOST] not in host_to_ip:
-                try:
-                    host_to_ip[row[HOST]] = socket.getaddrinfo(row[HOST], 4444)[0][4][0]
-                except:
-                    host_to_ip[row[HOST]] = "IP N/A"
+    try:
+        with open(filename, 'rb') as csvfile:
+            scanreader = csv.reader(csvfile, delimiter=",", quotechar="\"")
+            for row in scanreader:
+                # first get the IP address mapping (if not already discovered) and put it in host_to_ip
+                if row[HOST] not in host_to_ip:
+                    try:
+                        host_to_ip[row[HOST]] = socket.getaddrinfo(row[HOST], 4444)[0][4][0]
+                    except:
+                        host_to_ip[row[HOST]] = "IP N/A"
 
-            # create id_to_name entries if they don't already exist
-            if row[PID] not in id_to_name:
-                id_to_name[row[PID]] = row[NAME]
+                # create id_to_name entries if they don't already exist
+                if row[PID] not in id_to_name:
+                    id_to_name[row[PID]] = row[NAME]
 
-            # add entry to host_to_vulns for this host and this vuln
-            if row[HOST] not in host_to_vulns:
-                host_to_vulns[row[HOST]] = set()
-            host_to_vulns[row[HOST]].add(row[PID])
+                # create id_to_severity entries if they don't already exist
+                if row[PID] not in id_to_severity:
+                    id_to_severity[row[PID]] = row[RISK]
 
-            # add entry to vuln_to_hosts for this host and this vuln
-            if row[PID] not in vuln_to_hosts:
-                vuln_to_hosts[row[PID]] = set()
-            vuln_to_hosts[row[PID]] = row[HOST]
+                # add entry to host_to_vulns for this host and this vuln
+                if row[HOST] not in host_to_vulns:
+                    host_to_vulns[row[HOST]] = set()
+                host_to_vulns[row[HOST]].add(row[PID])
 
-    return (host_to_vulns, vuln_to_hosts, id_to_name, host_to_ip)
+                # add entry to vuln_to_hosts for this host and this vuln
+                if row[PID] not in vuln_to_hosts:
+                    vuln_to_hosts[row[PID]] = set()
+                vuln_to_hosts[row[PID]].add(row[HOST])
+
+        return ScanData(host_to_vulns, vuln_to_hosts, id_to_name, host_to_ip, id_to_severity)
+    except IOError:
+        print "Error! CSV file was not successfully read."
+        exit(1)
+    except:
+        print "An unknown error occurred during parsing!"
+        exit(1)
