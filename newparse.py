@@ -34,6 +34,9 @@ if __name__ == '__main__':
     if args.plugin_list:
         from mutators import plugin_list
         plugin_list.mutate(csv_data, args.plugin_list, environ)
+    if args.group_file:
+        from mutators import group_file
+        group_file.mutate(csv_data, args.group_file, environ)
 
     # print some statistics
     statistics.output(csv_data)
