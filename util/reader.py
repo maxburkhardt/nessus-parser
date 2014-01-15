@@ -1,9 +1,11 @@
 ## This part of the Nessus parser is intended to, given a filename,
-## read it, parse the CSV, and then return a tuple of four dictionaries:
+## read it, parse the CSV, and then return a ScanData object with
+## the following dictionaries
 ## 1. host_to_vulns, a dictionary from hostname -> set of plugin IDs
 ## 2. vuln_to_hosts, a dictionary from plugin ID -> set of hostnames
 ## 3. id_to_name, a dictionary from plugin ID -> human-friendly name
 ## 4. host_to_ip, a dictionary from hostname -> IP address
+## 5. id_to_severity, a dictionary from plugin ID -> severity ('Critical', 'High', etc.)
 import csv
 import socket
 from util.scandata import ScanData
