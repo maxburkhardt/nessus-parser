@@ -47,3 +47,6 @@ if __name__ == '__main__':
     if args.recipe_file:
         from output import create_rt_tickets
         create_rt_tickets.output(csv_data, args.recipe_file, environ)
+    if args.excel_file:
+        from output import excel
+        excel.output(csv_data, args.excel_file, environ)
