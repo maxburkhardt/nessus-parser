@@ -44,3 +44,6 @@ if __name__ == '__main__':
     # process output modules
     from output import text
     text.output(csv_data, environ)
+    if args.recipe_file:
+        from output import create_rt_tickets
+        create_rt_tickets.output(csv_data, args.recipe_file, environ)
