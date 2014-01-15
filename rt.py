@@ -230,7 +230,7 @@ class RTConnect:
     # handles the network request necessary for a query. path is the REST path to request, params is a list of key-value tuples that will be submitted, token is the auth token
     def request(self, path, params=None, method="GET"):
 
-        if not(cert_check(RTConnect.RT_URL,443)):
+        if not(self.cert_check(RTConnect.RT_URL,443)):
             print "SSL Failed, something is wrong!"
             return 0
         req_agent = httplib.HTTPSConnection(RTConnect.RT_URL, 443, timeout=30)
