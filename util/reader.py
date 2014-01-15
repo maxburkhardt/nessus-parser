@@ -6,7 +6,7 @@
 ## 4. host_to_ip, a dictionary from hostname -> IP address
 import csv
 import socket
-from scandata import ScanData
+from util.scandata import ScanData
 
 # Plugin ID,CVE,CVSS,Risk,Host,Protocol,Port,Name,Synopsis,Description,Solution,Plugin Output
 

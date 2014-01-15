@@ -2,7 +2,7 @@ import time
 import getpass
 import csv
 from string import Template
-from rt import RTConnect
+from util.rt import RTConnect
 def output(csv_data, ticket_recipe, environ):
     template_data = ""
     try:

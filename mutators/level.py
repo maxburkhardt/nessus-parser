@@ -1,4 +1,3 @@
-from scandata import ScanData
 def mutate(csv_data, level, environ):
 
     # first find all the vuln IDs that we don't care about

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 ## This script marshals the other parts of the parser
 
-from reader import read
-from arguments import parse_arguments
-import statistics
+from util.reader import read
+from util.arguments import parse_arguments
+import util.statistics as statistics
 
 if __name__ == '__main__':
     args = parse_arguments()

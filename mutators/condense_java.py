@@ -1,4 +1,3 @@
-from scandata import ScanData
 def mutate(csv_data, environ):
     # make a name map entry for the new, combined java vuln
     csv_data.id_to_name['JAVA'] = 'Java Vulnerability'

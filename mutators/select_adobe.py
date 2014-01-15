@@ -1,4 +1,3 @@
-from scandata import ScanData
 def mutate(csv_data, adobe_selection, environ):
     unacceptable_vulns = set()
     for vuln in csv_data.vuln_to_hosts.keys():
