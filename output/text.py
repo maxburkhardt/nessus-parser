@@ -1,4 +1,3 @@
-from scandata import ScanData
 def output(csv_data, environ):
     for vuln,hosts in csv_data.vuln_to_hosts.iteritems():
         print "=====", 
