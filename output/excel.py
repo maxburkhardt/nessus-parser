@@ -3,7 +3,10 @@ def output(csv_data, excel_file, environment):
     print "Making an excel file in", excel_file, "!"
     book = Workbook()
     sheet = book.add_sheet("Nessus Vulnerabilities", cell_overwrite_ok=True)        #creating sheet + fonts
-    sheet.header_str = ("&Lleft\nPage &P of &N")
+    sheet.set_panes_frozen(True)
+    sheet.set_horz_split_pos(1)
+    sheet.set_vert_split_pos(2)
+    sheet.set_remove_splits(True)
     default_style = easyxf("font: name Calibri, height 240;")
     header_style = easyxf("font: name Calibri, height 240; pattern: pattern diamonds, fore_colour pale_blue; align: wrap 1;")
     header = sheet.row(0)
