@@ -31,7 +31,7 @@ class RTConnect:
         sock = socket.socket()
         sock.connect((host,port))
 
-        sock = ssl.wrap_socket(sock,cert_reqs=ssl.CERT_REQUIRED,ca_certs=CERT_FILE)
+        sock = ssl.wrap_socket(sock,cert_reqs=ssl.CERT_REQUIRED,ca_certs=RTConnect.CERT_FILE)
 
         cert = sock.getpeercert()
 
@@ -46,10 +46,10 @@ class RTConnect:
 
     # Logs a user in to calnet with the given username and password. Returns the cookie that RT gives for access.
     def authenticate(self, user, password): 
-        if not(cert_check(AUTH_URL,443)):
+        if not(self.cert_check(RTConnect.AUTH_URL,443)):
             print "SSL Failed! Something is wrong!"
             return 0
-        auth_agent = httplib.HTTPSConnection(AUTH_URL, 443, timeout=10)
+        auth_agent = httplib.HTTPSConnection(RTConnect.AUTH_URL, 443, timeout=10)
         auth_agent.request("GET", "/cas/login?service=https://rt.rescomp.berkeley.edu/")
         initial_response = auth_agent.getresponse()
         if initial_response.status != 200:
@@ -71,10 +71,10 @@ class RTConnect:
         next_url = next_url[next_url.find("?"):]
         auth_agent.close()
         
-        if not(cert_check(RT_URL,443)):
+        if not(self.cert_check(RTConnect.RT_URL,443)):
             print "SSL Failed! Something is wrong!"
             return 0
-        cookie_agent = httplib.HTTPSConnection(RT_URL, 443, timeout=10)
+        cookie_agent = httplib.HTTPSConnection(RTConnect.RT_URL, 443, timeout=10)
         cookie_headers = {"Referer": "https://auth.berkeley.edu/cas/login?service=https://rt.rescomp.berkeley.edu/index.html", "User-Agent": RTConnect.USER_AGENT, "Connection": "keep-alive"}
         cookie_agent.request("GET", "/" + next_url, "", cookie_headers)
         cookie_response = cookie_agent.getresponse()
@@ -103,7 +103,7 @@ class RTConnect:
             cookie = f.read().strip()
         except IOError:
             return None
-        if not(cert_check(RT_URL,443)):
+        if not(self.cert_check(RTConnect.RT_URL,443)):
             print "SSL Failed! Something is wrong!"
             return 0
         test_agent = httplib.HTTPSConnection("rt.rescomp.berkeley.edu", 443, timeout=30)
@@ -230,10 +230,10 @@ class RTConnect:
     # handles the network request necessary for a query. path is the REST path to request, params is a list of key-value tuples that will be submitted, token is the auth token
     def request(self, path, params=None, method="GET"):
 
-        if not(cert_check(RT_URL,443)):
+        if not(self.cert_check(RTConnect.RT_URL,443)):
             print "SSL Failed, something is wrong!"
             return 0
-        req_agent = httplib.HTTPSConnection(RT_URL, 443, timeout=30)
+        req_agent = httplib.HTTPSConnection(RTConnect.RT_URL, 443, timeout=30)
         req_headers = {"User-Agent": RTConnect.USER_AGENT, "Connection": "keep-alive", "Cookie": self.token}
         body = ""
         if params:
