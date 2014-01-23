@@ -1,27 +1,18 @@
 def mutate(csv_data, environ):
     # make a name map entry for the new, combined java vuln
     csv_data.id_to_name['JAVA'] = 'Java Vulnerability'
+    csv_data.id_to_severity['JAVA'] = 'Critical'
 
-    hosts_with_java = set()
     java_plugins = set()
+    java_hosts = set()
 
-    print csv_data.host_to_vulns
-    for host,vulns in csv_data.host_to_vulns.iteritems():
-        java_found = False
+    for vuln,hosts in csv_data.vuln_to_hosts.iteritems():
+        if "Java" in csv_data.id_to_name[vuln]:
+            java_plugins.add(vuln)
+            for host in hosts:
+                java_hosts.add(host)
 
-        # first we'll check to see if java is present for this host at all
-        for vuln in vulns:
-            if "Java" in csv_data.id_to_name[vuln]:
-                java_found = True
-                java_plugins.add(vuln)
-
-        # if so, remove all other java vulns, and add the special one
-        # we can't do this in one loop because you can't modify a set 
-        # as you're iterating through it
-        if java_found:
-            vulns = set(filter(lambda x: "Java" not in x, vulns))
-            vulns.add('JAVA')
-            hosts_with_java.add(host)
-
-        # now we'll make the vuln_to_hosts dictionary match
-        csv_data.rebuild_vuln_to_hosts()
+    for plugin in java_plugins:
+        del csv_data.vuln_to_hosts[plugin]
+    csv_data.vuln_to_hosts['JAVA'] = java_hosts
+    csv_data.rebuild_host_to_vulns()

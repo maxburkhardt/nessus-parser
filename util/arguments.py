@@ -7,6 +7,8 @@ def parse_arguments():
             help="Nessus CSV file to parse.")
     parser.add_argument('--condense-java', dest='condense_java',
             action='store_true', help='combine all java-related vulns in to one category.')
+    parser.add_argument('--condense-ms', dest='condense_ms',
+            action='store_true', help='combine all microsoft-related vulns in to one category.')
     parser.add_argument('--select-adobe', dest='select_adobe', type=str,
             choices=['only', 'none'],
             help='output either ONLY Adobe vulnerabilities or NO Adobe vulnerabilities')
@@ -25,6 +27,6 @@ def parse_arguments():
             help='creates an Excel file with the information produced by this script.')
     parser.add_argument('--numeric-ids', dest='numeric_ids', action='store_true',
             help='represent plugins by their ID, not their human-readable name')
-    parser.set_defaults(condense_java=False, level='Critical', numeric_ids=False)
+    parser.set_defaults(condense_java=False, condense_ms=False, level='Critical', numeric_ids=False)
 
     return parser.parse_args()

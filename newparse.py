@@ -20,6 +20,9 @@ if __name__ == '__main__':
     if args.condense_java:
         from mutators import condense_java
         condense_java.mutate(csv_data, environ)
+    if args.condense_ms:
+        from mutators import condense_ms
+        condense_ms.mutate(csv_data, environ)
     if args.select_adobe:
         from mutators import select_adobe
         select_adobe.mutate(csv_data, args.select_adobe, environ)
