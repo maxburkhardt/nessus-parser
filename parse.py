@@ -40,6 +40,9 @@ if __name__ == '__main__':
     if args.group_file:
         from mutators import group_file
         group_file.mutate(csv_data, args.group_file, environ)
+    if args.exceptions_file:
+        from mutators import exceptions
+        exceptions.mutate(csv_data, args.exceptions_file, environ)
 
     # print some statistics
     statistics.output(csv_data)
