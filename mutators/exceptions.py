@@ -7,7 +7,7 @@ def mutate(csv_data, exceptions_file, environ):
           except ValueError:
              continue
           # commented lines:
-          if hostname[0] = '#':
+          if hostname[0] == '#':
              continue
           # don't do anything if we don't have matches for the hostname
           if not hostname in csv_data.host_to_vulns:
