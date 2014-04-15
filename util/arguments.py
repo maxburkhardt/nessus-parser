@@ -27,6 +27,8 @@ def parse_arguments():
             help='creates an Excel file with the information produced by this script.')
     parser.add_argument('--numeric-ids', dest='numeric_ids', action='store_true',
             help='represent plugins by their ID, not their human-readable name')
+    parser.add_argument('--use-exceptions', dest='exceptions_file', type=str,
+            help='use a file with a list of hostnames and nessus plugin ids that we don\'t care about')
     parser.set_defaults(condense_java=False, condense_ms=False, level='Critical', numeric_ids=False)
 
     return parser.parse_args()
