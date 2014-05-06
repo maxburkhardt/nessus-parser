@@ -1,13 +1,14 @@
 def mutate(csv_data, environ):
     # make a name map entry for the new, combined java vuln
     csv_data.id_to_name['JAVA'] = 'Java Vulnerability'
-    csv_data.id_to_severity['JAVA'] = 'Critical'
+    csv_data.id_to_severity['JAVA'] = environ['level']
 
     java_plugins = set()
     java_hosts = set()
 
     for vuln,hosts in csv_data.vuln_to_hosts.iteritems():
-        if "Java" in csv_data.id_to_name[vuln]:
+        if "Java" in csv_data.id_to_name[vuln] and \
+                            csv_data.id_to_severity[vuln] == environ['level']:
             java_plugins.add(vuln)
             for host in hosts:
                 java_hosts.add(host)

@@ -15,6 +15,8 @@ if __name__ == '__main__':
         environ['numeric_ids'] = True
     else:
         environ['numeric_ids'] = False
+    if args.level:
+        environ['level'] = args.level
 
     # process mutators, according to which ones were selected
     if args.condense_java:
